@@ -170,6 +170,9 @@ hist(chi_sq_values, breaks = 50, col = "blue",
 ### Part B
 
 ```{r part b}
+
+library(tidyverse)
+
 test_sentences = c(
   "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
   "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
@@ -189,17 +192,19 @@ for (i in 1:length(test_sentences)) {
   test_chi_sq[i] = calculate_chi_squared(test_sentences[i], letter_frequencies)
 }
 
+p_values = rep(0, length(test_chi_sq))
+for (i in 1:length(test_chi_sq)) {
+  p_values[i] = mean(chi_sq_values >= test_chi_sq[i])
+}
 
-test_results = data.frame(Sentence = 1:10, ChiSquared = test_chi_sq)
-
+test_results = data.frame(Sentence = 1:10, P_Value = p_values)
 
 print(test_results)
 
-LLM_sentence = which.max(test_results$ChiSquared)
-cat("The sentence most likely by an LLM is sentence number:", LLM_sentence, "\n")
+most_anomalous_sentence = which.min(test_results$P_Value)
+cat("The most anomalous sentence is sentence number:", most_anomalous_sentence, "\n")
 
-
-hist(test_results$ChiSquared, breaks = 5, col = "red",
-     main = "Chi-Squared Values for Test Sentences",
-     xlab = "Chi-Squared Value", ylab = "Frequency")
+hist(test_results$P_Value, breaks = 5, col = "red",
+     main = "Histogram of P-Values for Test Sentences",
+     xlab = "P-Value", ylab = "Frequency")
 ```
