@@ -201,8 +201,8 @@ test_results = data.frame(Sentence = 1:10, P_Value = p_values)
 
 print(test_results)
 
-most_anomalous_sentence = which.min(test_results$P_Value)
-cat("The most anomalous sentence is sentence number:", most_anomalous_sentence, "\n")
+LLM_sentence = which.min(test_results$P_Value)
+cat("The most anomalous sentence is sentence number:", LLM_sentence, "\n")
 
 hist(test_results$P_Value, breaks = 5, col = "red",
      main = "Histogram of P-Values for Test Sentences",
