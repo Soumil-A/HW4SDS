@@ -1,0 +1,205 @@
+---
+title: "HW4"
+output: html_document
+date: "2025-02-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(mosaic)
+```
+
+## Problem 1
+
+```{r problem 1}
+nflip(n = 2021, prob = 0.024)
+
+sim_flags <- do(100000) * nflip(n = 2021, prob = 0.024)
+head(sim_flags)
+
+ggplot(sim_flags) + 
+  geom_histogram(aes(x = nflip), binwidth = 1, fill = "lightblue", color = "black") +
+  labs(title = "Distribution of Flagged Trades Under the Null Hypothesis",
+       x = "Number of Flagged Trades",
+       y = "Frequency")
+
+sum(sim_flags$nflip >= 70)
+
+sum(sim_flags$nflip >= 70) / 100000
+```
+
+#### **Null Hypothesis (H₀):**
+
+The proportion of flagged trades for Iron Bank employees is the same as the baseline rate of 2.4%.
+
+#### **Test Statistic:**
+
+Our test statistic is the number of flagged trades out of 2021. Higher numbers show a stronger evidence against the null hypothesis, saying that Iron Bank employees may be flagged at a higher rate.
+
+#### P value:
+
+```         
+0.00205
+```
+
+#### **Conclusion:**
+
+The p-value is small, so we reject the null hypothesis, assuming that the flagged trade rate for Iron Bank is unusually high and not due to random variation.
+
+## Problem 2
+
+```{r problem 2}
+nflip(n = 50, prob = 0.03)
+
+violations <- do(100000) * nflip(n = 50, prob = 0.03)
+head(violations)
+
+ggplot(violations) + geom_histogram(aes(x = nflip), binwidth = 1, fill = "green", color = "black") +
+  labs(title = "Distribution of Health Code Violations Under Null Hypothesis",
+       x = "Number of Violations",
+       y = "Frequency")
+
+sum(violations$nflip >= 8)
+
+sum(violations$nflip >= 8) / 100000
+
+```
+
+#### **Null Hypothesis (H₀):**
+
+The proportion of health code violations for Gourmet Bites is the same as the baseline of 3%.
+
+#### **Test Statistic:**
+
+Here, our test statistic is the number of health code violations out of 50 inspections. Higher numbers show stronger evidence against the null hypothesis, conveying that Gourmet Bites might have a higher violation rate.
+
+#### P value:
+
+```         
+0.00016
+```
+
+#### **Conclusion:**
+
+The p-value is small, so we reject the null hypothesis, suggesting that Gourmet Bites has a higher health violation rate than the city average.
+
+## Problem 3:
+
+```{r problem 3}
+expected_proportions <- c(0.30, 0.25, 0.20, 0.15, 0.10)
+observed_counts <- c(85, 56, 59, 27, 13)
+
+total_jurors <- sum(observed_counts)
+expected_counts <- total_jurors * expected_proportions
+
+
+chisq.test(x = observed_counts, p = expected_proportions)
+```
+
+#### **Null Hypothesis:** 
+
+The judge’s jury selection process reflects the county’s population distribution.
+
+#### **Test Statistic:** 
+
+We use the chi-squared statistic, which measures how different the observed jury composition is from the expected distribution. A larger chi-squared value means a greater deviation from expectation.
+
+#### P Value:
+
+```         
+0.01445
+```
+
+#### Conclusion:
+
+The observed jury selection is the same as the expected distribution, meaning there is no statistical evidence of bias.
+
+## Problem 4:
+
+### Part A
+
+```{r problem 4}
+
+library(tidyverse)
+
+
+letter_frequencies = read.csv("letter_frequencies.csv")
+
+
+letter_frequencies$Probability = letter_frequencies$Probability / sum(letter_frequencies$Probability)
+
+
+sentences = readLines("brown_sentences.txt")
+
+
+calculate_chi_squared = function(sentence, freq_table) {
+  
+ 
+  freq_table$Probability = freq_table$Probability / sum(freq_table$Probability)
+  
+
+  clean_sentence = gsub("[^A-Za-z]", "", sentence)
+  clean_sentence = toupper(clean_sentence)
+  
+  
+  observed_counts = table(factor(strsplit(clean_sentence, "")[[1]], levels = freq_table$Letter))
+  
+ 
+  total_letters = sum(observed_counts)
+  expected_counts = total_letters * freq_table$Probability
+  
+  # Compute chi-squared statistic
+  chi_squared_stat = sum((observed_counts - expected_counts)^2 / expected_counts)
+  
+  return(chi_squared_stat)
+}
+
+
+chi_sq_values = rep(0, length(sentences))
+for (i in seq_along(sentences)) {
+  chi_sq_values[i] = calculate_chi_squared(sentences[i], letter_frequencies)
+}
+
+hist(chi_sq_values, breaks = 50, col = "blue",
+     main = "Chi-Squared Statistics for Brown Corpus",
+     xlab = "Chi-Squared Value", ylab = "Frequency")
+
+```
+
+### Part B
+
+```{r part b}
+test_sentences = c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+
+test_chi_sq = rep(0, length(test_sentences))
+for (i in 1:length(test_sentences)) {
+  test_chi_sq[i] = calculate_chi_squared(test_sentences[i], letter_frequencies)
+}
+
+
+test_results = data.frame(Sentence = 1:10, ChiSquared = test_chi_sq)
+
+
+print(test_results)
+
+LLM_sentence = which.max(test_results$ChiSquared)
+cat("The sentence most likely by an LLM is sentence number:", LLM_sentence, "\n")
+
+
+hist(test_results$ChiSquared, breaks = 5, col = "red",
+     main = "Chi-Squared Values for Test Sentences",
+     xlab = "Chi-Squared Value", ylab = "Frequency")
+```
